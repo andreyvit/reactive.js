@@ -22,6 +22,7 @@ class RUniverse extends EventEmitter
 
   then: (func) ->
     @_completionFuncs.push func
+    @_scheduleChangeProcessing()
 
 
   _internal_modelChanged: (model) ->

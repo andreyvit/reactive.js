@@ -14,6 +14,8 @@ class RModel extends EventEmitter
     @_changedAttrs  = {}
     @_changePending = no
 
+    @constructor.schemaObj.initializeInstance(this)
+
     @initialize()
 
   initialize: ->
@@ -25,6 +27,10 @@ class RModel extends EventEmitter
     @attributes[attr]?
 
   set: (attr, value) ->
+    unless attrSchema = @constructor.schemaObj.attributes[attr]
+      throw new Error "Unknown attribute #{@constructor.name}.#{attr}"
+    value = attrSchema.preSet(this, value)
+
     @attributes[attr] = value
     unless @_changedAttrs[attr]
       @_changedAttrs[attr] = yes
