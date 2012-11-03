@@ -142,3 +142,50 @@ describe 'R.Model', ->
       u = new R.Universe()
       m = new BarModel()
       strictEqual m.foo, null
+
+
+  describe "with a computed property", ->
+
+    class BarModel extends R.Model
+      schema:
+        foo: { type: 'int', default: 42 }
+        bar: { type: 'int', computed: yes }
+      'compute bar': ->
+        @foo * 101
+
+    it "should initially set computed properties to their default values", ->
+      u = new R.Universe()
+      m = new BarModel()
+      equal m.bar, 0
+
+    it "should eventually compute the value of a computed property", ->
+      u = new R.Universe()
+      m = new BarModel()
+      await u.then defer()
+      equal m.bar, 4242
+
+    it "should recompute the value of a computed property when its dependencies change", ->
+      u = new R.Universe()
+      m = new BarModel()
+      await u.then defer()
+
+      m.foo = 24
+      await u.then defer()
+      equal m.bar, 2424
+
+    it "should recompute the value of a computed property when its outside dependencies change", ->
+      class BozModel extends R.Model
+        schema:
+          bar: { type: 'int', computed: yes }
+        'compute bar': ->
+          @foo.foo * 101
+
+      u = new R.Universe()
+      m = new BozModel()
+      m.foo = new FooModel()
+      m.foo.foo = 42
+      await u.then defer()
+
+      m.foo.foo = 24
+      await u.then defer()
+      equal m.bar, 2424

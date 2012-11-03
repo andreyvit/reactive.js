@@ -1,3 +1,4 @@
+debug = require('debug')('reactive')
 { EventEmitter } = require 'events'
 RModel           = require './model'
 
@@ -8,6 +9,11 @@ class RUniverse extends EventEmitter
     @_changedModels = []
     @_scheduled = no
     @_completionFuncs = []
+    @_blocks = []
+    @_blocksById = {}
+    @_nextOrdinal = {}
+
+    @currentCollector = null
 
     @_processPendingChanges = @_processPendingChanges.bind(@)
 
@@ -25,20 +31,52 @@ class RUniverse extends EventEmitter
     @_scheduleChangeProcessing()
 
 
+  uniqueId: (className, detail) ->
+    detail = if detail then ('_' + detail).replace(/[^0-9a-zA-Z]+/g, '_') else ''
+
+    @_nextOrdinal[className] or= 0
+    ordinal = @_nextOrdinal[className]++
+
+    "#{className}#{ordinal}#{detail}"
+
+
+  dependency: (model, attribute) ->
+    @currentCollector?.dependency(model, attribute)
+
+
   _internal_modelChanged: (model) ->
+    # debug "Model change pending: #{model}"
     @_changedModels.push(model)
     @_scheduleChangeProcessing()
 
+  _internal_scheduleBlock: (block) ->
+    bid = block._id
+    unless @_blocksById.hasOwnProperty(bid)
+      @_blocksById[bid] = yes
+      @_blocks.push block
+    @_scheduleChangeProcessing()
 
   _processPendingChanges: ->
-    @_scheduled = no
-    while model = @_changedModels.shift()
-      attrs = model._internal_startProcessingChanges()
-      for attr, value of attrs
-        @emit 'change', model, attr
+    while (@_changedModels.length > 0) or (@_blocks.length > 0) or (@_completionFuncs.length > 0)
+      while model = @_changedModels.shift()
+        attrs = model._internal_startProcessingChanges()
+        for attr, value of attrs
+          # debug "Change: #{model}.#{attr}"
+          @emit 'change', model, attr
 
-    while func = @_completionFuncs.shift()
-      func()
+          for subscriber in model.subscribersTo(attr)
+            @_internal_scheduleBlock(subscriber)
+
+      while block = @_blocks.shift()
+        delete @_blocksById[block._id]
+        block.execute()
+        break if (@_changedModels.length > 0)
+
+      while func = @_completionFuncs.shift()
+        func()
+        break if (@_changedModels.length > 0) or (@_blocks.length > 0)
+
+    @_scheduled = no
 
 
   _scheduleChangeProcessing: ->

@@ -1,5 +1,6 @@
 debug = require('debug')('reactive')
 types = require('./types')
+RBlock = require './block'
 
 
 class RAttributeSchema
@@ -24,6 +25,9 @@ class RAttributeSchema
 
   initializeInstance: (instance) ->
     instance.attributes[@key] = @_defaultValue()
+    if @computeFunc
+      new RBlock instance, "compute #{@key}", =>
+        instance.attributes[@key] = @computeFunc.call(instance)
 
   _defaultValue: ->
     switch typeof @default
