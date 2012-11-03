@@ -2,7 +2,7 @@
   "author": "Andrey Tarantsov <andrey@tarantsov.com>",
   "name": "reactive",
   "description": "Reactive model kit for Node.js and JavaScript",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "homepage": "https://github.com/andreyvit/reactive.js",
   "repository": {
     "url": "git://github.com/andreyvit/reactive.js"
