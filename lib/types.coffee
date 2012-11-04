@@ -25,7 +25,7 @@ class ObjectType
     if !@class.name then throw new Error "Only classes with a .name can be used for type checking"
 
   toString: ->
-    @class.name
+    "{ object: #{@class.name} }"
 
   coerce: (value) ->
     if value?
@@ -96,6 +96,8 @@ exports.resolve = resolve = (type) ->
           keys = Object.keys(type)
           if (keys.length is 1) and (keys[0] is 'array')
             new ArrayType(resolve(type.array))
+          else if (keys.length is 1) and (keys[0] is 'object')
+            new ObjectType(type.object)
           else
             throw new Error "Unsupported type declaration #{type}"
         else

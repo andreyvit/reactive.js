@@ -17,6 +17,10 @@ describe 'types', ->
     it "should resolve { array: 'int' } into array(int)", ->
       equal types.resolve({ array: 'int' }).toString(), "{ array: int }"
 
+    it "should resolve { object: Foo } into object(Foo)", ->
+      class Foo
+      equal types.resolve({ object: Foo }).toString(), "{ object: Foo }"
+
   describe 'array(int).coerce', ->
 
     it "should turn [1, '2'] into [1, 2]", ->
