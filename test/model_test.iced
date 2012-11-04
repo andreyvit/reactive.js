@@ -243,3 +243,29 @@ describe 'R.Model', ->
       m.foo = 42
       await u.then defer()
       deepEqual values, [0, 42]
+
+    it "should update a cascade of dependent values", ->
+      class BozModel extends R.Model
+        schema:
+          foo: { type: 'int' }
+          bar: { type: 'int', computed: yes }
+          boz: { type: 'int', computed: yes }
+        'compute bar': ->
+          @foo * 101
+        'compute boz': ->
+          @bar + 1
+
+      u = new R.Universe()
+      m = new BozModel()
+
+      m.foo = 42
+      await u.then defer()
+      await process.nextTick defer()
+      equal m.bar, 4242
+      equal m.boz, 4243
+
+      m.foo = 24
+      await u.then defer()
+      await process.nextTick defer()
+      equal m.bar, 2424
+      equal m.boz, 2425

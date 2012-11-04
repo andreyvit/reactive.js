@@ -47,6 +47,9 @@ class RModel extends EventEmitter
     value = attrSchema.preSet(this, value)
 
     @attributes[attr] = value
+    @_changed(attr)
+
+  _changed: (attr) ->
     unless @_changedAttrs[attr]
       @_changedAttrs[attr] = yes
       unless @_changePending

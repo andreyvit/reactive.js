@@ -28,6 +28,7 @@ class RAttributeSchema
     if @computeFunc
       new RBlock instance, "compute #{@key}", =>
         instance.attributes[@key] = @computeFunc.call(instance)
+        instance._changed(@key)
 
   _defaultValue: ->
     switch typeof @default
