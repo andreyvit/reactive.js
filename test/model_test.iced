@@ -1,4 +1,4 @@
-{ ok, equal, strictEqual } = require 'assert'
+{ ok, equal, strictEqual, deepEqual } = require 'assert'
 R             = require '../lib/reactive'
 
 
@@ -13,6 +13,11 @@ describe 'R.Model', ->
     m = new FooModel()
     m.once 'foo', done
     m.emit 'foo'
+
+  it "should be okay with creating multiple instances of a model", ->
+    u = new R.Universe()
+    m1 = new FooModel()
+    m2 = new FooModel()
 
   describe "#initialize()", ->
     it "should be able to call #get() and #set()", ->
@@ -189,3 +194,52 @@ describe 'R.Model', ->
       m.foo.foo = 24
       await u.then defer()
       equal m.bar, 2424
+
+    it "should resubscribe when dependencies change", ->
+      u = new R.Universe()
+
+      foo1 = new FooModel()
+      foo1.foo = 11
+
+      foo2 = new FooModel()
+      foo2.foo = 22
+
+      class BozModel extends R.Model
+        schema:
+          ref: { type: FooModel }
+          bar: { type: 'int', computed: yes }
+        'compute bar': ->
+          @ref.foo * 101
+
+      m = new BozModel()
+      m.ref = foo1
+
+      await u.then defer()
+      equal m.bar, 1111
+      ok foo1._subscribers.length > 0
+      ok foo2._subscribers.length == 0
+
+      m.ref = foo2
+      await u.then defer()
+      equal m.bar, 2222
+      ok foo1._subscribers.length == 0
+      ok foo2._subscribers.length > 0
+
+    it "should turn methods named 'automatically something' into blocks", ->
+      values = []
+
+      class BozModel extends R.Model
+        schema:
+          foo: { type: 'int' }
+        'automatically do something': ->
+          values.push @foo
+
+      u = new R.Universe()
+      m = new BozModel()
+
+      await u.then defer()
+      deepEqual values, [0]
+
+      m.foo = 42
+      await u.then defer()
+      deepEqual values, [0, 42]

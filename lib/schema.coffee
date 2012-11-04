@@ -48,12 +48,22 @@ class RModelSchema
     for key, options of data
       @attributes[key] =  @_createAttribute(key, options)
 
+    @autoBlocks = []
+
+    for key of @modelClass.prototype
+      if $ = key.match /^automatically (.*)$/
+        value = @modelClass.prototype[key]
+        @autoBlocks.push [$[1], value]
+
+
   toString: ->
     "#{@modelClass.name}.schemaObj"
 
   initializeInstance: (instance) ->
     for own key, attrSchema of @attributes
       attrSchema.initializeInstance(instance)
+    for [name, func] in @autoBlocks
+      new RBlock instance, name, func.bind(instance)
 
   _createAttribute: (key, options) ->
     Object.defineProperty @modelClass.prototype, key,

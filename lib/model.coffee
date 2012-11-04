@@ -82,7 +82,7 @@ class RModel extends EventEmitter
   # shared instance of R.Universe; initially set to a dummy implementation, will be reset by
   # R.Universe constructor; can be overridden in subclass prototypes or even per instance
   dummyNextUniqueId = 1
-  universe: { _internal_modelChanged: (->), destroy: (->), uniqueId: (-> "c#{dummyNextUniqueId++}"), dependency: (->) }
+  universe: { _internal_modelChanged: (->), destroy: (->), uniqueId: (-> "c#{dummyNextUniqueId++}"), dependency: (->), _internal_scheduleBlock: ((block) -> process.nextTick -> block.execute()) }
 
 
 module.exports = RModel
