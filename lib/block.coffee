@@ -22,7 +22,7 @@ class RBlock
       model.unsubscribe(this)
 
   execute: ->
-    # debug "Executing block #{this}"
+    debug "Executing block #{this}"
 
     for own dummy, model of @_dependencies
       model.unsubscribe(this)
@@ -37,7 +37,7 @@ class RBlock
     return rv
 
   dependency: (model, attribute) ->
-    # debug "Dependency of #{this}: #{model}.#{attribute}"
+    debug "#{this} depends on #{model}.#{attribute}"
     model.subscribe(this, attribute)
     @_dependencies[model._id] = model
 

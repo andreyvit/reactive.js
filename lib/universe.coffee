@@ -61,7 +61,7 @@ class RUniverse extends EventEmitter
       while model = @_changedModels.shift()
         attrs = model._internal_startProcessingChanges()
         for attr, value of attrs
-          # debug "Change: #{model}.#{attr}"
+          debug "Change: #{model}.#{attr} is now #{model.get(attr)}"
           @emit 'change', model, attr
 
           for subscriber in model.subscribersTo(attr)
