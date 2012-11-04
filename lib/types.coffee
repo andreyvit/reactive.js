@@ -27,6 +27,14 @@ class ObjectType
   toString: ->
     @class.name
 
+  coerce: (value) ->
+    if value?
+      unless typeof value is 'object'
+        throw new Error "Invalid #{typeof value} value, expected #{@class.name}"
+      unless value instanceof @class
+        throw new Error "Invalid #{value.constructor.name or 'object'} value, expected #{@class.name}"
+    value
+
   defaultValue: -> null  # TODO: deal with nullability
 
 

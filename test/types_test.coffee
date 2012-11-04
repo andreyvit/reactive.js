@@ -1,4 +1,4 @@
-{ ok, equal, deepEqual } = require 'assert'
+{ ok, equal, deepEqual, throws } = require 'assert'
 types = require '../lib/types'
 
 describe 'types', ->
@@ -21,3 +21,10 @@ describe 'types', ->
 
     it "should turn [1, '2'] into [1, 2]", ->
       equal JSON.stringify(types.coerce([1, '2'], { array: 'int' })), JSON.stringify([1, 2])
+
+  describe 'object(Foo)', ->
+
+    it "should complain about mismatched object types when given an instance of unrelated class", ->
+      class Foo
+      class Bar
+      throws (-> types.coerce(new Bar(), Foo)), /Invalid Bar value/
