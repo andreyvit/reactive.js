@@ -269,3 +269,67 @@ describe 'R.Model', ->
       await process.nextTick defer()
       equal m.bar, 2424
       equal m.boz, 2425
+
+    it "should prevent cascaded updates when manually-set values don't actually change", ->
+      log = []
+
+      class BozModel extends R.Model
+        schema:
+          foo: { type: 'int' }
+          bar: { type: 'int', computed: yes }
+          boz: { type: 'int', computed: yes }
+        'compute bar': ->
+          log.push 'bar'
+          @foo % 5
+        'compute boz': ->
+          log.push 'boz'
+          @bar * 10
+
+      u = new R.Universe()
+      m = new BozModel()
+
+      m.foo = 42
+      await u.then defer()
+      await process.nextTick defer()
+      equal m.bar, 2
+      equal m.boz, 20
+      deepEqual log, ['bar', 'boz']
+
+      m.foo = 42
+      await u.then defer()
+      await process.nextTick defer()
+      equal m.bar, 2
+      equal m.boz, 20
+      deepEqual log, ['bar', 'boz']
+
+    it "should prevent cascaded updates when computed values don't actually change", ->
+      log = []
+
+      class BozModel extends R.Model
+        schema:
+          foo: { type: 'int' }
+          bar: { type: 'int', computed: yes }
+          boz: { type: 'int', computed: yes }
+        'compute bar': ->
+          log.push 'bar'
+          @foo % 5
+        'compute boz': ->
+          log.push 'boz'
+          @bar * 10
+
+      u = new R.Universe()
+      m = new BozModel()
+
+      m.foo = 42
+      await u.then defer()
+      await process.nextTick defer()
+      equal m.bar, 2
+      equal m.boz, 20
+      deepEqual log, ['bar', 'boz']
+
+      m.foo = 27
+      await u.then defer()
+      await process.nextTick defer()
+      equal m.bar, 2
+      equal m.boz, 20
+      deepEqual log, ['bar', 'boz', 'bar']

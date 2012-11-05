@@ -46,8 +46,9 @@ class RModel extends EventEmitter
       throw new Error "Unknown attribute #{@constructor.name}.#{attr}"
     value = attrSchema.preSet(this, value)
 
-    @attributes[attr] = value
-    @_changed(attr)
+    if @attributes[attr] != value
+      @attributes[attr] = value
+      @_changed(attr)
 
   _changed: (attr) ->
     unless @_changedAttrs[attr]
