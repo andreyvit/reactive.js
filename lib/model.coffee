@@ -1,5 +1,6 @@
 { EventEmitter } = require 'events'
 RModelSchema = require './schema'
+RBlock = require './block'
 
 class RModel extends EventEmitter
 
@@ -33,6 +34,9 @@ class RModel extends EventEmitter
     for block in @_blocks
       block.dispose()
     @_blocks = []
+
+  pleasedo: (name, func) ->
+    new RBlock this, name, func
 
   get: (attr) ->
     @universe.dependency(this, attr)

@@ -1,6 +1,5 @@
 debug = require('debug')('reactive')
 types = require('./types')
-RBlock = require './block'
 
 
 class RAttributeSchema
@@ -26,7 +25,7 @@ class RAttributeSchema
   initializeInstance: (instance) ->
     instance.attributes[@key] = @_defaultValue()
     if @computeFunc
-      new RBlock instance, "compute #{@key}", =>
+      instance.pleasedo "compute #{@key}", =>
         newValue = @computeFunc.call(instance)
         oldValue = instance.attributes[@key]
         if newValue != oldValue
@@ -67,7 +66,7 @@ class RModelSchema
     for own key, attrSchema of @attributes
       attrSchema.initializeInstance(instance)
     for [name, func] in @autoBlocks
-      new RBlock instance, name, func.bind(instance)
+      instance.pleasedo name, func.bind(instance)
 
   _createAttribute: (key, options) ->
     Object.defineProperty @modelClass.prototype, key,

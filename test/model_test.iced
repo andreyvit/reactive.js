@@ -333,3 +333,26 @@ describe 'R.Model', ->
       equal m.bar, 2
       equal m.boz, 20
       deepEqual log, ['bar', 'boz', 'bar']
+
+  describe "with a block", ->
+
+    it "should reinvoke the block when dependent values change", ->
+      log = []
+      class BozModel extends R.Model
+        schema:
+          foo: { type: 'int' }
+
+      u = new R.Universe()
+      m = new BozModel()
+
+      m.foo = 42
+      m.pleasedo "smt", -> log.push m.foo
+
+      await u.then defer()
+      await process.nextTick defer()
+      deepEqual log, [42]
+
+      m.foo = 24
+      await u.then defer()
+      await process.nextTick defer()
+      deepEqual log, [42, 24]
