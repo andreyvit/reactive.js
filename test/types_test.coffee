@@ -1,5 +1,5 @@
 { ok, equal, deepEqual, throws } = require 'assert'
-types = require '../lib/types'
+types = require "../#{process.env.JSLIB or 'lib'}/types"
 
 describe 'types', ->
 

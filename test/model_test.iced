@@ -1,5 +1,5 @@
 { ok, equal, strictEqual, deepEqual } = require 'assert'
-R             = require '../lib/reactive'
+R = require "../#{process.env.JSLIB or 'lib'}/reactive"
 
 
 class FooModel extends R.Model
