@@ -1,15 +1,14 @@
 { EventEmitter } = require 'events'
-RModelSchema = require './schema'
 RBlock = require './block'
 
 class RModel extends EventEmitter
 
-  constructor: ->
+  constructor: (options) ->
     unless @constructor.name
       throw new Error "R.Model must have a name"
 
-    unless @constructor.schemaObj?.modelClass is @constructor
-      @constructor.schemaObj = new RModelSchema(@constructor)
+    unless @constructor.isSingletonClass
+      throw new Error "R.Model subclasses must be instantiated via R.Universe.create()"
 
     @_id = @universe.uniqueId(@constructor.name)
 
@@ -22,13 +21,18 @@ class RModel extends EventEmitter
     # format: attr1, subscriber1, attr2, subscriber2, ...
     @_subscribers = []
 
-    @constructor.schemaObj.initializeInstance(this)
+    schema = @constructor.schemaObj
+    schema.initializeInstance(this)
 
-    @initialize()
+    for own k, v of options
+      if schema.attributes.hasOwnProperty(k)
+        @set(k, v)
+
+    @initialize(options)
 
   toString: -> @_id
 
-  initialize: ->
+  initialize: (options) ->
 
   dispose: ->
     for block in @_blocks

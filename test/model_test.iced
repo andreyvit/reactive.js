@@ -10,14 +10,15 @@ class FooModel extends R.Model
 describe 'R.Model', ->
 
   it "should conform to EventEmitter protocol", (done) ->
-    m = new FooModel()
+    u = new R.Universe()
+    m = u.create(FooModel)
     m.once 'foo', done
     m.emit 'foo'
 
   it "should be okay with creating multiple instances of a model", ->
     u = new R.Universe()
-    m1 = new FooModel()
-    m2 = new FooModel()
+    m1 = u.create(FooModel)
+    m2 = u.create(FooModel)
 
   describe "#initialize()", ->
     it "should be able to call #get() and #set()", ->
@@ -25,34 +26,41 @@ describe 'R.Model', ->
         initialize: ->
           @set 'foo', 42
           equal @get('foo'), 42
-      m = new Ruby()
+
+      u = new R.Universe()
+      m = u.create(Ruby)
       equal m.get('foo'), 42
 
   describe "#get()", ->
 
     it "should return a value set via #set()", ->
-      m = new FooModel()
+      u = new R.Universe()
+      m = u.create(FooModel)
       m.set('foo', 42)
       equal m.get('foo'), 42
 
   describe "#has()", ->
 
     it "should return no for undefined attributes", ->
-      m = new FooModel()
+      u = new R.Universe()
+      m = u.create(FooModel)
       equal m.has('foo'), no
 
     it "should return no for attributes set to undefined", ->
-      m = new FooModel()
+      u = new R.Universe()
+      m = u.create(FooModel)
       m.set('foo', undefined)
       equal m.has('foo'), no
 
     it "should return no for attributes set to null", ->
-      m = new FooModel()
+      u = new R.Universe()
+      m = u.create(FooModel)
       m.set('foo', null)
       equal m.has('foo'), no
 
     it "should return yes for attributes set to anything else", ->
-      m = new FooModel()
+      u = new R.Universe()
+      m = u.create(FooModel)
       m.set('foo', '')
       equal m.has('foo'), yes
 
@@ -60,7 +68,7 @@ describe 'R.Model', ->
 
     it "should emit a change event on R.Universe", (done) ->
       u = new R.Universe()
-      m = new FooModel()
+      m = u.create(FooModel)
 
       await
         u.once 'change', defer(model, attr)
@@ -73,7 +81,7 @@ describe 'R.Model', ->
 
     it "should emit the change event asynchronously", (done) ->
       u = new R.Universe()
-      m = new FooModel()
+      m = u.create(FooModel)
 
       u.once 'change', ->
         ok afterSet
@@ -84,7 +92,7 @@ describe 'R.Model', ->
 
     it "should emit the change event once for any number of consecutive changes", (done) ->
       u = new R.Universe()
-      m = new FooModel()
+      m = u.create(FooModel)
 
       count = 0
       u.on 'change', ->
@@ -104,13 +112,13 @@ describe 'R.Model', ->
 
     it "should return a previously set value", ->
       u = new R.Universe()
-      m = new FooModel()
+      m = u.create(FooModel)
       m.foo = 42
       equal m.foo, 42
 
     it "should emit a change event on write", (done) ->
       u = new R.Universe()
-      m = new FooModel()
+      m = u.create(FooModel)
 
       await
         u.once 'change', defer(model, attr)
@@ -129,7 +137,7 @@ describe 'R.Model', ->
         schema:
           foo: { type: 'int', default: 42 }
       u = new R.Universe()
-      m = new BarModel()
+      m = u.create(BarModel)
       strictEqual m.foo, 42
 
     it "should initialize a property with its type's default value when no explicit default is specified", ->
@@ -137,7 +145,7 @@ describe 'R.Model', ->
         schema:
           foo: { type: 'int' }
       u = new R.Universe()
-      m = new BarModel()
+      m = u.create(BarModel)
       strictEqual m.foo, 0
 
     it "should initialize a property with null when neither type nor explicit default is specified", ->
@@ -145,7 +153,7 @@ describe 'R.Model', ->
         schema:
           foo: {}
       u = new R.Universe()
-      m = new BarModel()
+      m = u.create(BarModel)
       strictEqual m.foo, null
 
 
@@ -160,18 +168,18 @@ describe 'R.Model', ->
 
     it "should initially set computed properties to their default values", ->
       u = new R.Universe()
-      m = new BarModel()
+      m = u.create(BarModel)
       equal m.bar, 0
 
     it "should eventually compute the value of a computed property", ->
       u = new R.Universe()
-      m = new BarModel()
+      m = u.create(BarModel)
       await u.then defer()
       equal m.bar, 4242
 
     it "should recompute the value of a computed property when its dependencies change", ->
       u = new R.Universe()
-      m = new BarModel()
+      m = u.create(BarModel)
       await u.then defer()
 
       m.foo = 24
@@ -186,8 +194,8 @@ describe 'R.Model', ->
           @foo.foo * 101
 
       u = new R.Universe()
-      m = new BozModel()
-      m.foo = new FooModel()
+      m = u.create(BozModel)
+      m.foo = u.create(FooModel)
       m.foo.foo = 42
       await u.then defer()
 
@@ -198,10 +206,10 @@ describe 'R.Model', ->
     it "should resubscribe when dependencies change", ->
       u = new R.Universe()
 
-      foo1 = new FooModel()
+      foo1 = u.create(FooModel)
       foo1.foo = 11
 
-      foo2 = new FooModel()
+      foo2 = u.create(FooModel)
       foo2.foo = 22
 
       class BozModel extends R.Model
@@ -211,7 +219,7 @@ describe 'R.Model', ->
         'compute bar': ->
           @ref.foo * 101
 
-      m = new BozModel()
+      m = u.create(BozModel)
       m.ref = foo1
 
       await u.then defer()
@@ -235,7 +243,7 @@ describe 'R.Model', ->
           values.push @foo
 
       u = new R.Universe()
-      m = new BozModel()
+      m = u.create(BozModel)
 
       await u.then defer()
       deepEqual values, [0]
@@ -256,7 +264,7 @@ describe 'R.Model', ->
           @bar + 1
 
       u = new R.Universe()
-      m = new BozModel()
+      m = u.create(BozModel)
 
       m.foo = 42
       await u.then defer()
@@ -286,7 +294,7 @@ describe 'R.Model', ->
           @bar * 10
 
       u = new R.Universe()
-      m = new BozModel()
+      m = u.create(BozModel)
 
       m.foo = 42
       await u.then defer()
@@ -318,7 +326,7 @@ describe 'R.Model', ->
           @bar * 10
 
       u = new R.Universe()
-      m = new BozModel()
+      m = u.create(BozModel)
 
       m.foo = 42
       await u.then defer()
@@ -343,7 +351,7 @@ describe 'R.Model', ->
           foo: { type: 'int' }
 
       u = new R.Universe()
-      m = new BozModel()
+      m = u.create(BozModel)
 
       m.foo = 42
       m.pleasedo "smt", -> log.push m.foo

@@ -1,6 +1,7 @@
 debug = require('debug')('reactive')
 { EventEmitter } = require 'events'
 RModel           = require './model'
+RModelSchema     = require './schema'
 
 
 class RUniverse extends EventEmitter
@@ -12,6 +13,8 @@ class RUniverse extends EventEmitter
     @_blocks = []
     @_blocksById = {}
     @_nextOrdinal = {}
+
+    @_modelSchemas = {}
 
     @currentCollector = null
 
@@ -43,6 +46,17 @@ class RUniverse extends EventEmitter
   dependency: (model, attribute) ->
     @currentCollector?.dependency(model, attribute)
 
+
+  mixin: (modelClass, mixinClasses...) ->
+    @modelSchema(modelClass).mixin(mixinClasses...)
+
+  create: (modelClass, options={}) ->
+    @modelSchema(modelClass).create(options)
+
+  modelSchema: (modelClass) ->
+    unless modelClass.name
+      throw new Error "R.Universe require model classes to have a .name"
+    @_modelSchemas[modelClass.name] or= new RModelSchema(this, modelClass)
 
   _internal_modelChanged: (model) ->
     # debug "Model change pending: #{model}"

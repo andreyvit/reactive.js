@@ -44,23 +44,76 @@ class RAttributeSchema
 
 class RModelSchema
 
-  constructor: (@modelClass) ->
+  constructor: (@universe, originalModelClass) ->
+    @modelClass = @_createSingletonClass(originalModelClass)
+
     @attributes = {}
-
-    data = @modelClass.prototype.schema ? {}
-    for key, options of data
-      @attributes[key] =  @_createAttribute(key, options)
-
     @autoBlocks = []
 
-    for key of @modelClass.prototype
-      if $ = key.match /^automatically (.*)$/
-        value = @modelClass.prototype[key]
-        @autoBlocks.push [$[1], value]
+    @_handleMagicKeys(@modelClass)
 
 
   toString: ->
     "#{@modelClass.name}.schemaObj"
+
+
+  mixin: (mixinClasses...) ->
+    # TODO: create a singleton class if not already done
+    for mixinClass in mixinClasses
+      @_extendModel(mixinClass)
+      @_handleMagicKeys(mixinClass)
+
+  create: (options) ->
+    result = new @modelClass(options)
+
+
+  _createSingletonClass: (modelClass) ->
+    ## This would be a sane way to do this, if Function.name wasn't unassignable
+    # singletonClass = (args...) ->
+    #   modelClass.apply(this, args)
+    # singletonClass.name = modelClass.name
+
+    # so let's do it the insane way
+    global.REACTIVE_CLASS_CREATION_HACK = modelClass
+    singletonClass = eval("(function(modelClass) { return function #{modelClass.name}() { modelClass.apply(this, arguments); }; })(global.REACTIVE_CLASS_CREATION_HACK);")
+    delete global.REACTIVE_CLASS_CREATION_HACK;
+
+    singletonClass.isSingletonClass = yes
+    for own k, v of modelClass
+      singletonClass[k] = v
+
+    singletonClass.prototype = { constructor: singletonClass }
+    singletonClass.prototype.__proto__ = modelClass.prototype
+
+    singletonClass.schemaObj = this
+    singletonClass.prototype.universe = @universe
+
+    singletonClass
+
+
+  _extendModel: (mixinClass) ->
+    for own k, v of mixinClass
+      if @modelClass.hasOwnProperty(k)
+        throw new Error "Key #{JSON.stringify(k)} is already defined on model #{@modelClass.name}, cannot redefine in mixin #{mixinClass.name}"
+      @modelClass[k] = v
+    for k, v of mixinClass.prototype when !(k is 'schema')
+      if @modelClass.prototype.hasOwnProperty(k)
+        throw new Error "Prototype key #{JSON.stringify(k)} is already defined on model #{@modelClass.name}, cannot redefine in mixin #{mixinClass.name}"
+      @modelClass.prototype[k] = v
+
+
+  _handleMagicKeys: (mixinClass) ->
+    prototype = mixinClass.prototype
+
+    data = prototype.schema ? {}
+    for key, options of data
+      @attributes[key] =  @_createAttribute(key, options)
+
+    for key of prototype
+      if $ = key.match /^automatically (.*)$/
+        value = prototype[key]
+        @autoBlocks.push [$[1], value]
+
 
   initializeInstance: (instance) ->
     for own key, attrSchema of @attributes
