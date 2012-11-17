@@ -4,7 +4,7 @@ R = require "../#{process.env.JSLIB or 'lib'}/reactive"
 
 describe 'R.Model mixins', ->
 
-  it.skip "should woot", (done) ->
+  it "should handle mixins", (done) ->
     class FooModel extends R.Model
       schema:
         foo: { type: 'int' }
