@@ -50,7 +50,10 @@ StdTypes =
   string:
     isTypeDescriptor: yes
     coerce: (value) ->
-      "#{value}"
+      if value?
+        "#{value}"
+      else
+        null
     toString: ->
       'string'
     defaultValue: -> ''
