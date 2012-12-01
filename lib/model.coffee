@@ -8,7 +8,7 @@ class RModel extends EventEmitter
       throw new Error "R.Model must have a name"
 
     unless @constructor.isSingletonClass
-      throw new Error "R.Model subclasses must be instantiated via R.Universe.create()"
+      throw new Error "R.Model subclass #{@constructor.name} must be instantiated via R.Universe.create()"
 
     @_id = @universe.uniqueId(@constructor.name)
 
