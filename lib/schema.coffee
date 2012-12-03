@@ -42,6 +42,19 @@ class RAttributeSchema
         @default
 
 
+class RRegularPropertySchema
+
+  constructor: (@modelSchema, @key) ->
+    @getter = null
+    @setter = null
+
+  define: (modelClass) ->
+    descriptor = {}
+    descriptor.get = @getter  if @getter
+    descriptor.set = @setter  if @setter
+    Object.defineProperty(modelClass.prototype, @key, descriptor)
+
+
 class RModelSchema
 
   constructor: (@universe, originalModelClass) ->
@@ -109,10 +122,19 @@ class RModelSchema
     for key, options of data
       @attributes[key] =  @_createAttribute(key, options)
 
+    propSchemas = {}
     for key of prototype
       if $ = key.match /^automatically (.*)$/
         value = prototype[key]
         @autoBlocks.push [$[1], value]
+      else if $ = key.match /^get (.*)$/
+        prop = $[1]
+        (propSchemas[prop] or= new RRegularPropertySchema(this, prop)).getter = prototype[key]
+      else if $ = key.match /^set (.*)$/
+        prop = $[1]
+        (propSchemas[prop] or= new RRegularPropertySchema(this, prop)).setter = prototype[key]
+    for own key, propSchema of propSchemas
+      propSchema.define(@modelClass)
 
 
   initializeInstance: (instance) ->
